@@ -648,6 +648,8 @@ public abstract class BotClient {
 				logger.info("[VKAPI] Message cannot be sent due to: " + e.toString());
 			}
     	}
+    	
+    	
     	static final String EMPTY_MESSAGE = "&#13;";
     	 
     	IBotUtils get(@NotNull Message message);
@@ -735,6 +737,8 @@ public abstract class BotClient {
     	boolean messageIsButton();
     	
     	boolean senderIsMember();
+    	
+    	boolean userIsMember(@NotNull Integer id);
     	
     	boolean objectIsGroup(@NotNull Integer id);
     	
@@ -1517,7 +1521,12 @@ public abstract class BotClient {
     		    	payloads.put(this, Arrays.asList(Arrays.asList(button_y)));
     		    	return this;
     		    }
-    		    
+    		    public KeyBoardBuilder singleComplete() {
+    		    	
+    		    	addButtonY(buttons_x);
+    		    	
+    		    	return this;
+    		    }
     		    public KeyBoardBuilder completeRow(@NotNull KeyboardButton... button_y) {
     		    	addButtonY(buttons_x);
     		    	addButtonY(Arrays.asList(button_y));
@@ -1738,21 +1747,33 @@ public abstract class BotClient {
     	    static class VkCaptcha {
     	    	private static final BiMap<Integer, Integer> captchaCache = HashBiMap.create();
     	    	
-    	    	private Integer attempts;
+    	    	public void setupAttempts() {
+    	    		
+    	    		captchaCache.put(userId, attempts);
     	    	
-    	    	private Integer userId;
+    	    	}
+    	    	
+    	    	@NotNull private Integer attempts;
+    	    	
+    	    	@NotNull private Integer userId;
     	    	
     	    	public Integer attempts() {
     	    		return this.attempts;
+    	    	}
+    	    	
+    	    	public Integer decrementsAttempts(@NotNull Integer user) {
+    	    		return captchaCache.forcePut(user, captchaCache.get(user)-1);
     	    	}
     	    	
     	    	public Integer userId() {
     	    		return this.userId;
     	    	}
     	    	
-    	    	public VkCaptcha() {
-					
-				}
+    	    	public VkCaptchaGenerator generator() {
+    	    		return new VkCaptchaGenerator(this.userId);
+    	    	}
+    	 
+    	    	
     	    	@Getter
     	    	@NoArgsConstructor
     	    	@EqualsAndHashCode
@@ -1782,9 +1803,9 @@ public abstract class BotClient {
     	    		
     	    		private VkCaptchaForm form;
     	    		
-    	    		@Setter
-    	    		private String answer;
+    	    		private static final Map<Integer, String> answer = Maps.newConcurrentMap();
     	    		
+    	    		private Integer capchaHolder;
     	    		
     	    		public VkCaptchaGenerator size(@NotNull Integer x, @NotNull Integer y) {
     	    			
@@ -1794,6 +1815,11 @@ public abstract class BotClient {
     	    			
     	    		return this;
     	    	
+    	    		}
+    	    		
+    	    		
+    	    		public VkCaptchaGenerator(@NotNull Integer holder) {
+    	    			this.capchaHolder = holder;
     	    		}
     	    		
     	    		public VkCaptchaGenerator lenght(@NotNull Integer lenght) {
@@ -1831,9 +1857,7 @@ public abstract class BotClient {
     	    				if(value.test(objects) && Arrays.stream(objects).allMatch(Objects::nonNull)) {
     	    					then.apply(objects).run();
     	    				}else {
-    	    					
     	    					elseIf.run();
-    	    					
     	    				}
     	    			}
     	    		}
@@ -1843,9 +1867,11 @@ public abstract class BotClient {
     	    					new BasicCaptcha(CAPTCHA_SIZE_X, CAPTCHA_SIZE_Y), null,
     	    					this.size_x, this.size_y);
     	    			
-    	    			safeVoidResponse(objects -> () -> captcha.text(objects[0]), () -> captcha.text(DEFAULT_LENGHT), objects -> objects[0] == 0, this.captcha_lenght);
+    	    			safeVoidResponse(objects ->
+    	    			() -> captcha.text(objects[0]), () -> captcha.text(DEFAULT_LENGHT), objects -> objects[0] == 0, this.captcha_lenght);
 
-    	    			safeVoidResponse(objects -> () -> captcha.background(background), () -> captcha.background(DEFAULT_CAPTHA_BACKGROUND), null, this.background);
+    	    			safeVoidResponse(objects -> 
+    	    			() -> captcha.background(background), () -> captcha.background(DEFAULT_CAPTHA_BACKGROUND), null, this.background);
     	    			
     	    			safeVoidResponse(objects -> () -> {
     	    				if(objects[0] == VkCaptchaNoise.NOISE_STRAIGHT_LINE) {
@@ -1878,6 +1904,9 @@ public abstract class BotClient {
     	    			}, () -> captcha.distortionShear(), null, this.form);
     	    			
     	    			try {
+    	    				
+    	    				answer.put(this.capchaHolder, captcha.getText());
+    	    				
 							captcha.save(path + fileName + ".png");
 							
 						} catch (IOException e) {
@@ -1905,8 +1934,7 @@ public abstract class BotClient {
     	    			ELECTRIC2
     	    		}
     	    		
-    	    	}
-    	    	
+    	    	}	
     	    	
     	    }
     	    @Data
@@ -2539,6 +2567,19 @@ public abstract class BotClient {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+		}
+
+		@Override
+		public boolean userIsMember(@NotNull Integer id) {
+			
+			try {
+				return client.groups().isMember(actor, String.valueOf(actor.getGroupId())).userId(id).execute() != BoolInt.NO;
+			} catch (ApiException | ClientException e) {
+				logger.info("(BotUtils) UserIsMember called exception from: " + e.toString());
+				
+				e.printStackTrace();
+			}
+			return false;
 		}
 
 
