@@ -668,11 +668,24 @@ public abstract class BotClient {
     	void sendPhoto(@NotNull String message,@NotNull File photo);
     	
     	void sendDoc(@NotNull String message, @NotNull File doc);
-    	
+    	/*
+    	 * В беседах где > 30 участников данный метод работает не корректно, из-за проблем на стороне вк
+    	 */
     	void sendAudioFile(@NotNull String message, @NotNull File audioFile);
+    	
+    	void sendReplyConversationMessage(@NotNull String message, @NotNull Integer conversationMessageId);
     	
     	void sendVideoFile(@NotNull String video, @NotNull File videoFile);
     	
+    	void sendReplyMessage(@NotNull String message, @NotNull Integer replyId);
+    	
+    	void sendForwardMessage(@NotNull String message, @NotNull Integer peerId, @NotNull Integer conversationId,@NotNull boolean isReply);
+    	
+    	int getReplyMessageIdFromConversation(@NotNull Integer conversationMessageId);
+    	
+    	int getConversationId();
+    	
+    	void sendSticker(@NotNull Integer stickerId);
     	
     	void sendMessageToAllDialogs(@NotNull Integer startMessageId, @NotNull Integer count, @NotNull String message);
     	
@@ -681,6 +694,8 @@ public abstract class BotClient {
     	void sendTranslatedMessage(@NotNull String message);
     	
     	void sendTranslatedMessage(@NotNull String message, @NotNull String translateLang);
+    	
+    	void pinMessage(@NotNull String messageId);
     	
     	void sendTranslatedMessage(@NotNull String message, @NotNull String translateLang, @NotNull Consumer<ConversationTranslate> onFail);
     	
@@ -709,6 +724,7 @@ public abstract class BotClient {
     	boolean isBotId(@NotNull Integer id);
     	
     	Integer senderId();
+    	
     	
     	VkMainConversationBotFunctions functions();
     	
@@ -2038,12 +2054,12 @@ public abstract class BotClient {
 				client.messages().send(actor)
 				.message(message.replace("%name%", "[id" + this.message.getFromId() + "|" + this.getUserById(this.message.getFromId(),
 								(Fields[])null).getFirstName() + "]"))
-				.randomId(new Random().nextInt(1000))
+				.randomId(new Random().nextInt(100000))
 				.peerId(this.message.getPeerId())
 				.execute();
 			} catch (ApiException | ClientException e) {
 				
-				
+				logger.info("(BotUtils) Message called exception from: " + e.toString());
 			}
 			
 		}
@@ -2055,12 +2071,12 @@ public abstract class BotClient {
 				client.messages().send(actor)
 				.message(message.replace("%name%", "[id" + this.message.getFromId() + "|" + this.getUserById(this.message.getFromId(),
 						(Fields[])null).getFirstName() + "]")).keyboard(board)
-				.randomId(new Random().nextInt(1000))
+				.randomId(new Random().nextInt(100000))
 				.peerId(this.message.getPeerId())
 				.execute();
 			} catch (ApiException | ClientException e) {
 				
-				
+				logger.info("(BotUtils) Message called exception from: " + e.toString());
 			}
 			
 		}
@@ -2086,7 +2102,7 @@ public abstract class BotClient {
 			try {
 				client.messages().send(actor)
 				.message(message).attachment(attachment)
-				.randomId(new Random().nextInt(1000))
+				.randomId(new Random().nextInt(100000))
 				.peerId(this.message.getPeerId())
 				.execute();
 			} catch (ApiException | ClientException e) {
@@ -2102,7 +2118,7 @@ public abstract class BotClient {
 				
 				client.photos().saveMessagesPhoto(actor, "");
 				client.messages().send(actor).keyboard(board)
-				.randomId(new Random().nextInt(1000))
+				.randomId(new Random().nextInt(100000))
 				.peerId(this.message.getPeerId())
 				.execute();
 			} catch (ApiException | ClientException e) {
@@ -2379,8 +2395,7 @@ public abstract class BotClient {
 		}
 
 		@Override
-		public void sendTranslatedMessage(@NotNull String message, @NotNull String translateLang,
-				@NotNull Consumer<ConversationTranslate> onFail) {
+		public void sendTranslatedMessage(@NotNull String message, @NotNull String translateLang, @NotNull Consumer<ConversationTranslate> onFail) {
 			sendMessage(new ConversationTranslate().sourceLanguage("auto").targetLanguage(translateLang).text(message).transtale(onFail));
 			
 		}
@@ -2451,10 +2466,11 @@ public abstract class BotClient {
 		public void sendTo(@NotNull String message, @NotNull Integer peerId) {
 			
 			try {
+				
 				client.messages().send(actor)
 				.message(message.replace("%name%", "[id" + this.message.getFromId() + "|" + this.getUserById(this.message.getFromId(),
 								(Fields[])null).getFirstName() + "]"))
-				.randomId(new Random().nextInt(1000))
+				.randomId(new Random().nextInt(100000))
 				.peerId(peerId)
 				.execute();
 			} catch (ApiException | ClientException e) {
@@ -2468,7 +2484,7 @@ public abstract class BotClient {
 			try {
 				client.messages().send(actor)
 				.message(message).attachment(attachment)
-				.randomId(new Random().nextInt(1000))
+				.randomId(new Random().nextInt(100000))
 				.peerId(peerId)
 				.execute();
 			} catch (ApiException | ClientException e) {
@@ -2564,7 +2580,9 @@ public abstract class BotClient {
 				}));
 
 			} catch (ApiException | ClientException e) {
-				// TODO Auto-generated catch block
+				
+				logger.info("(BotUtils) UNSAFE METHOD: " + e.toString());
+				
 				e.printStackTrace();
 			}
 		}
@@ -2580,6 +2598,103 @@ public abstract class BotClient {
 				e.printStackTrace();
 			}
 			return false;
+		}
+		/*
+		 * Version >= 0.93
+		 */
+		@Override
+		public void sendReplyMessage(@NotNull String message, @NotNull Integer replyId) {
+			try {
+				client.messages().send(actor)
+				.message(message.replace("%name%", "[id" + this.message.getFromId() + "|" + this.getUserById(this.message.getFromId(),
+								(Fields[])null).getFirstName() + "]"))
+				.randomId(new Random().nextInt(100000)).replyTo(replyId)
+				.peerId(this.message.getPeerId())
+				.execute();
+			} catch (ApiException | ClientException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		}
+
+		@Override
+		public int getReplyMessageIdFromConversation(@NotNull Integer conversationMessageId) {
+			
+			try {
+				return client.messages().getByConversationMessageId(actor, message.getPeerId(), conversationMessageId).execute().getItems().get(0).getId();
+			} catch (ApiException | ClientException e) {
+				logger.info("(BotUtils) Cannot get reply id: " + e.toString());
+				e.printStackTrace();
+			}
+			return 0;
+		}
+
+		@Override
+		public int getConversationId() {
+			
+			return message.getConversationMessageId();
+		}
+
+		@Override
+		public void sendReplyConversationMessage(@NotNull String message, @NotNull Integer conversationMessageId) {
+			
+	    	try {
+				client.messages().send(actor)
+				.message(message.replace("%name%", "[id" + this.message.getFromId() + "|" + this.getUserById(this.message.getFromId(),
+								(Fields[])null).getFirstName() + "]"))
+				.randomId(new Random().nextInt(100000)).forward("{\"peer_id\":"+ this.message.getPeerId() +",\"conversation_message_ids\":["+conversationMessageId+"],\"is_reply\":true}")
+				.peerId(this.message.getPeerId())
+				.execute();
+			} catch (ApiException | ClientException e) {
+				
+				logger.info("(BotUtils) Message called exception from: " + e.toString());
+			}
+			
+		}
+
+		@Override
+		public void sendForwardMessage(@NotNull String message, @NotNull Integer peerId,
+				@NotNull Integer conversationId, @NotNull boolean isReply) {
+	    	try {
+				client.messages().send(actor)
+				.message(message.replace("%name%", "[id" + this.message.getFromId() + "|" + this.getUserById(this.message.getFromId(),
+								(Fields[])null).getFirstName() + "]"))
+				.randomId(new Random().nextInt(100000)).forward("{\"peer_id\":"+ peerId +",\"conversation_message_ids\":["+conversationId+"],\"is_reply\":"+isReply+"}")
+				.peerId(this.message.getPeerId())
+				.execute();
+			} catch (ApiException | ClientException e) {
+				
+				logger.info("(BotUtils) Message called exception from: " + e.toString());
+			}
+			
+		}
+
+		@Override
+		public void sendSticker(@NotNull Integer stickerId) {
+	    	try {
+				client.messages().send(actor)
+				.stickerId(stickerId)
+				.randomId(new Random().nextInt(100000))
+				.peerId(this.message.getPeerId())
+				.execute();
+			} catch (ApiException | ClientException e) {
+				
+				logger.info("(BotUtils) Message called exception from: " + e.toString());
+			}
+			
+		}
+
+		@Override
+		public void pinMessage(@NotNull String conversationMessageId) {
+			try {
+				client.messages().pin(actor, this.message.getPeerId()).unsafeParam("conversation_message_id", conversationMessageId).execute();
+			} catch (ApiException | ClientException e) {
+				
+				logger.info("(BotUtils) Message called exception from: " + e.toString());
+				
+			}
+			
 		}
 
 
