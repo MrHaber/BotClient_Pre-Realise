@@ -490,7 +490,6 @@ public abstract class BotClient {
 		logger.info("(" + clientName + " v"+ version +")" + " Project using " + vkSDK);
 		logger.info("(" + clientName + " v"+ version +")" + " Current SDK Version is " + vkSDKVersion);
 		
-		System.out.println("" + this.actor);
 		logger.info("GroupActor: " + this.actor);
 		logger.info("(BotClient) Starting offsets...");
 		event = new PollHandler(this.client, this.actor);
