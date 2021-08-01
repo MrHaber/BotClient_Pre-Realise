@@ -1,6 +1,37 @@
 # BotClient Pre realise, custom build for Vk library
 
 # Using:
+### Startup
+```java
+@BotHandler(token = "token", id = 12345) // Token and ID for init botclient
+public class BotClientTest extends BotClient{
+
+	private static final BotClientTest bot = newLocalExec(BotClientTest::new, true); // initialize bootstrap
+	
+	public BotClientTest() {
+		// empty constructor, flag for compiler
+	}
+	@Override
+	public void onStart() {
+		
+		debug(true); // debug mode, for expand information when program works
+		
+		systemLocale("ru"); // localization for activate autotranslate cluster
+		
+		getInstaller().installHandler(new CommandDispatch()); // Init program
+		
+	}
+}
+	@AsyncInit(asyncId = 1)
+	public static class CommandDispatch implements VkCommandExecutor {
+
+		@Override
+		public void onCommand(@NotNull IBotUtils bot, @NotNull VkApiClient client, @NotNull GroupActor actor,
+				@NotNull Message message, @NotNull String[] args) {
+				// TODO: Works code there, when user send command in VK chat to bot
+		}
+	}
+```
 ### Maven
 ```xml
 <repositories>
