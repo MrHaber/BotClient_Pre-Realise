@@ -60,7 +60,7 @@ public class BotClientTest extends BotClient{
 				bot.sendMessageWithKeyBoard("Gradle test", keyboard.build());
 				bot.sendAudioFile("Gradle Version is 6.7.0",
 						bot.functions().speechText(bot.functions()
-					.tts("en", "C:\\Users\\Mi\\AppData\\Local\\ArmA 2 OA\\MPMissionsCache\\audio.ogg", "Gradle Version is 6.7.0"), fail -> {
+					.tts("en", "C:\\Users\\Folder\\AppData\\Local\\Folder\\MPMissionsCache\\audio.ogg", "Gradle Version is 6.7.0"), fail -> {
 					bot.sendMessage("Неудалось отправить сообщение");
 				}));
 				
