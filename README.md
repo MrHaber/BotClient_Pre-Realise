@@ -1,5 +1,5 @@
 # BotClient Pre realise, custom build for Vk library
-
+## VK-API Longpoll version <= 5.101
 # Using:
 ### Startup
 ```java
