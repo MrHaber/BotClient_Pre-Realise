@@ -505,17 +505,23 @@ public abstract class BotClient {
 		safe().setupGroupData(new BotClient.SafeClient.GroupData(id,token));
 		this.actor = this.setupGroupActorReference();
 		
-		System.out.println("CUSTOM BUILD FOR HCODER 4444444444444444444444444444444");
 		logger.info("(" + clientName + " v"+ version +")" + " Project using " + vkSDK);
+		
 		logger.info("(" + clientName + " v"+ version +")" + " Current SDK Version is " + vkSDKVersion);
 		
 		if(isValidVersion(actor)) {
 			
-			logger.warn("(" + clientName + " v"+ version +")" + " VK API Version is not invalid for this task. Version must be less or equal 5.101");
+			logger.error("(" + clientName + " v"+ version +")" + " VK API Version is not invalid for this task. Version must be less or equal 5.101");
 			
 		}
+		
+		Preconditions.checkArgument(!isValidVersion(actor), "Your API version is invalid, change version in Longpoll API Settings");
+		
+		if(debug) {
 		System.out.println("" + this.actor);
 		logger.info("GroupActor: " + this.actor);
+		}
+		
 		logger.info("(BotClient) Starting offsets...");
 		event = new PollHandler(this.client, this.actor);
 		SafeClient.asyncInit();
