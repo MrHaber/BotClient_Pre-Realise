@@ -506,6 +506,7 @@ public abstract class BotClient {
 		this.actor = this.setupGroupActorReference();
 		
 		logger.info("(" + clientName + " v"+ version +")" + " Project using " + vkSDK);
+		
 		logger.info("(" + clientName + " v"+ version +")" + " Current SDK Version is " + vkSDKVersion);
 		
 		if(isValidVersion(actor)) {
