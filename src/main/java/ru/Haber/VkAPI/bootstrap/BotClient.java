@@ -511,7 +511,6 @@ public abstract class BotClient {
 		
 		if(isValidVersion(actor)) {
 			
-			
 			logger.error("(" + clientName + " v"+ version +")" + " VK API Version is not invalid for this task. Version must be less or equal 5.101");
 			
 		}
