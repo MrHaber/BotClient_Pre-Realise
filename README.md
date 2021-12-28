@@ -21,7 +21,6 @@ public class BotClientTest extends BotClient{
 		getInstaller().installHandler(new CommandDispatch()); // Init program
 		
 	}
-}
 	@AsyncInit(asyncId = 1)
 	public static class CommandDispatch implements VkCommandExecutor {
 
@@ -31,6 +30,7 @@ public class BotClientTest extends BotClient{
 				// TODO: Works code there, when user send command in VK chat to bot
 		}
 	}
+}
 ```
 ### Maven
 ```xml
