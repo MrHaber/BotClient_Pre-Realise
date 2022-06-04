@@ -985,7 +985,7 @@ public abstract class BotClient {
     		    	
     		}
     		
-    			String extractId(String s) {
+    		public String extractId(String s) {
     			if(!s.contains("id") && !isText(s)) {
     				return s;
     			}else if(!s.contains("id") && isText(s)) {
