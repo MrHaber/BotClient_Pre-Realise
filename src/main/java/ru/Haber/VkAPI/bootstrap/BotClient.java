@@ -309,7 +309,19 @@ public abstract class BotClient {
 		return new AutomaticlyTranslation();
 	}
 	
-
+	public static void sendMessageTo(@NotNull String message, @NotNull Integer peerId) {
+		try {
+			safe().getClient().messages().send(safe().getGroupActor())
+			.message(message)
+			.randomId(new Random().nextInt(1000))
+			.peerId(peerId)
+			.execute();
+		} catch (ApiException | ClientException e) {
+			
+			logger.info("(" + clientName + " v"+ version +")" + " Can't send message outside.");
+			
+		}
+	}
 	
 	@Contract(pure = true)
 	
