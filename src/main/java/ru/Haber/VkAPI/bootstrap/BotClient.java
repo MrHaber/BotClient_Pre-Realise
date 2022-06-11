@@ -174,9 +174,11 @@ public abstract class BotClient {
 	
 	@Nullable @ToString.Exclude @Getter PollHandler event;
 	
+	@NotNull private static Boolean isRemoteExec = false;
+	
 	@Nullable static SafeClient safeClient;
 	
-	@NotNull private static Class<? extends BotClient> loaderClass;
+	@NotNull private static BotClient loaderClass;
 	
 	@NonFinal @Nullable private static Config config;
 	
@@ -272,7 +274,11 @@ public abstract class BotClient {
 	@ParametersAreNonnullByDefault
 	public static <T extends BotClient> T newRemoteExec(
 			@NotNull Supplier<? extends T> object, @NotNull Boolean isDebbuging) {
+		
+			isRemoteExec = true;
+			
 			debug = isDebbuging;
+			
 			setupBotClient((BotClient)object.get());
 		
 		return object.get();
@@ -281,19 +287,28 @@ public abstract class BotClient {
 	
 	public static <T extends BotClient> T setupBotClient(T currentLoader) {
 		
-		val loader = currentLoader.getClass();
+		val loader = currentLoader;
 		
 		loaderClass = loader;
+		if (isRemoteExec) {
+			
+		try {
+			main(new String[] {});
+		} catch (InstantiationException | IllegalAccessException | ClientException | ApiException
+				| InterruptedException e) {
+			
+			e.printStackTrace();
+			
+		}
 		
+		}
 		return currentLoader;
-		
-		
 	}
 	
 	
 	public static void main(String[] args) throws ClientException, ApiException, InterruptedException, InstantiationException, IllegalAccessException {
 		
-		loaderClass.newInstance().start();
+		loaderClass.start();
 		
 	}
 	
@@ -474,6 +489,11 @@ public abstract class BotClient {
 	
 	public void start() {
 		
+		
+		if(debug == null) {
+			throw new NullPointerException("Debug parameter is not initialized, please use newRemote modules, or initialize debug mode before static calling.");
+		}
+		
 		initVariable();
 		
 		this.id = AnnotationHandler.botId();
@@ -490,12 +510,9 @@ public abstract class BotClient {
 		else {
 			logger.warn("(" + clientName + " v"+ version +")" +"(BotClient) Configuration file, is exists in API client.");
 		}
-		try {
-			safeClient = new SafeClient(loaderClass.newInstance());
-		} catch (InstantiationException | IllegalAccessException e1) {
-			logger.warn("(" + clientName + " v"+ version +")" + " Loader class instance is not verificated. Exception code: " + e1.getLocalizedMessage());
-			e1.printStackTrace();
-		}
+		
+		safeClient = new SafeClient(loaderClass);
+
 		safe().setupGroupData(new BotClient.SafeClient.GroupData(id,token));
 		this.actor = this.setupGroupActorReference();
 		
