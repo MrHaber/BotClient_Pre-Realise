@@ -59,3 +59,34 @@ allprojects {
 	        implementation 'com.github.MrHaber:BotClient_Pre-Realise:version_from_github'
 	}
 ```
+
+### Disable internal vk logger for external projects
+
+### Maven
+```xml
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-api</artifactId>
+      <version>2.11.2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+      <version>2.11.2</version>
+    </dependency>
+```
+### Gradle(Groovy)
+```groovy
+dependencies {
+    //Binding for Log4J -->
+    compile group: 'org.apache.logging.log4j', name: 'log4j-slf4j-impl', version: '2.11.2'
+    
+    //Log4j API and Core implementation required for binding
+    compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.11.2'
+    compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.11.2'
+}
+```
+After all, go to main class and setting up logger level for HttpTransportClient
+ ```java
+Configurator.setLevel("com.vk.api.sdk.httpclient.HttpTransportClient",Level.WARN);
+```
