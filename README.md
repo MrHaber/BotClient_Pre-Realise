@@ -1,3 +1,5 @@
+[![](https://jitpack.io/v/MrHaber/BotClient_Pre-Realise.svg)](https://jitpack.io/#MrHaber/BotClient_Pre-Realise)
+
 # BotClient Pre realise, custom build for Vk library
 ## VK-API Longpoll version <= 5.101
 # Using:
