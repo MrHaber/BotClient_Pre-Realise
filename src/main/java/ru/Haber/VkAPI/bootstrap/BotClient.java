@@ -124,6 +124,13 @@ import ru.Haber.VkAPI.Annotations.BotHandler;
 import ru.Haber.VkAPI.Annotations.VkAction;
 import ru.Haber.VkAPI.Captha.BasicCaptcha;
 import ru.Haber.VkAPI.ConfigurationWrapper.Config;
+import ru.Haber.VkAPI.CustomCallback.CallbackMessagePayload;
+import ru.Haber.VkAPI.CustomCallback.CustomVkMessagesEditQuery;
+import ru.Haber.VkAPI.CustomCallback.VkCallbackAPI;
+import ru.Haber.VkAPI.CustomCallback.VkCallbackMessage;
+import ru.Haber.VkAPI.CustomCallback.VkCallbackMessageEventAnswer;
+import ru.Haber.VkAPI.CustomCallback.VkCallbackPollHandler;
+import ru.Haber.VkAPI.bootstrap.BotClient.IBotUtils;
 import ru.Haber.VkAPI.bootstrap.BotClient.IBotUtils.VkMainConversationBotFunctions.ConversationTranslate;
 import ru.Haber.VkAPI.bootstrap.BotClient.IBotUtils.VkMainConversationBotFunctions.ConversationTranslate.AutomaticlyTranslation;
 import ru.Haber.VkAPI.bootstrap.BotClient.IBotUtils.VkMainConversationBotFunctions.CustomKeyboard;
@@ -623,7 +630,11 @@ public abstract class BotClient {
 
     public interface VkEventObject {
     	
+    }
+    
+    public interface VkCallbackListener extends VkEventObject{
     	
+    	void onCallbackEvent(@NotNull Integer groupId, @NotNull VkCallbackMessage message, @NotNull IBotUtils bot);
     	
     }
     
@@ -722,6 +733,12 @@ public abstract class BotClient {
     	
     	void sendSticker(@NotNull Integer stickerId);
     	
+    	void editMessage(@NotNull String text, @NotNull Integer peer_id, @NotNull String conversation_message_id); // TODO
+    	
+    	void editMessageKeyboard(@NotNull String text, @NotNull CustomKeyboard board, @NotNull Integer peer_id, @NotNull String conversation_message_id);
+    	
+    	void editMessageAttachment(@NotNull String text, @NotNull String attachment, @NotNull Integer peer_id, @NotNull String conversation_message_id);
+    	
     	void sendMessageToAllDialogs(@NotNull Integer startMessageId, @NotNull Integer count, @NotNull String message);
     	
     	void sendTranslatedMessage(@NotNull String message, @NotNull Consumer<ConversationTranslate> onFail);
@@ -733,6 +750,8 @@ public abstract class BotClient {
     	void sendTranslatedMessage(@NotNull String message, @NotNull String translateLang);
     	
     	void pinMessage(@NotNull String messageId);
+    	
+    	void sendMessageEventAnswer(@NotNull String event_id, @NotNull Integer user_id, @NotNull Integer peer_id, @Nullable String event_data);
     	
     	void sendTranslatedMessage(@NotNull String message, @NotNull String translateLang, @NotNull Consumer<ConversationTranslate> onFail);
     	
@@ -2067,10 +2086,13 @@ public abstract class BotClient {
         		    
         		    @SerializedName("open_link")
         		    OPEN_LINK("open_link"),
-
+        		    @SerializedName("callback")
+        		    CALLBACK("callback"),
+        		    
         		    @SerializedName("open_app")
         		    OPEN_APP("open_app");
-
+        		    
+        		    
         		    private final String value;
 
         		    CustomKeyboardButtonActionType(String value) {
@@ -2119,6 +2141,13 @@ public abstract class BotClient {
     		    	
     		    		return this;
     		    		
+    		    	}
+    		    	
+    		    	public VkCustomButton callbackPayload(@NotNull CallbackMessagePayload payload) {
+    		    		
+    		    		this.payload = payload.toString();
+    		    		
+    		    		return this;
     		    	}
     		    	
     		    	public VkCustomButton customPayload(@NotNull String simpleId) {
@@ -2562,7 +2591,7 @@ public abstract class BotClient {
     	}
     }
     @Data
-    @NoArgsConstructor(access = AccessLevel.PRIVATE)
+    @NoArgsConstructor(access = AccessLevel.PUBLIC)
     public static class BotUtilsImpl implements IBotUtils {
 
     	
@@ -2777,7 +2806,6 @@ public abstract class BotClient {
 		
 		@Getter
 		@AllArgsConstructor(access = AccessLevel.PRIVATE)
-		
 		public enum Platform {
 			MOBILE(1,"(Mobile) 📱"),
 			IPHONE(2, "(IPHONE) 🍏"),
@@ -3143,7 +3171,6 @@ public abstract class BotClient {
 				.peerId(this.message.getPeerId())
 				.execute();
 			} catch (ApiException | ClientException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			
@@ -3232,6 +3259,7 @@ public abstract class BotClient {
 		public void sendCarouselMessage(@NotNull String message, @NotNull String carousel) {
 			
 			try {
+				
 				client.messages().send(actor)
 				.message(message.replace("%name%", "[id" + this.message.getFromId() + "|" + this.getUserById(this.message.getFromId(),
 								(Fields[])null).getFirstName() + "]"))
@@ -3243,6 +3271,72 @@ public abstract class BotClient {
 				
 				e.printStackTrace();
 			}
+		}
+
+		@Override
+		public void sendMessageEventAnswer(@NotNull String event_id, @NotNull Integer user_id, @NotNull Integer peer_id,
+				String event_data) {
+			val vkCallback = new VkCallbackMessageEventAnswer(client, actor);
+			try {
+				vkCallback.eventId(event_id).userId(user_id).peerId(peer_id).event_data(event_data).execute();
+			} catch (ApiException | ClientException e) {
+				
+				logger.info("(BotUtils) Message called exception from: " + e.toString());
+				
+				e.printStackTrace();
+			}
+		}
+
+		@Override
+		public void editMessage(@NotNull String text, @NotNull Integer peer_id, @NotNull String conversation_message_id) {
+			val customMessageEdit = new CustomVkMessagesEditQuery(client, actor, peer_id, conversation_message_id);
+			
+			try {
+				customMessageEdit.message(text).keepForwardMessages(true)
+				.keepSnippets(true).dontParseLinks(false).execute();
+			} catch (ApiException | ClientException e) {
+				
+				logger.info("(BotUtils) Message called exception from: " + e.toString());
+				
+				e.printStackTrace();
+			}			
+		}
+
+
+		@Override
+		public void editMessageKeyboard(@NotNull String text, @NotNull CustomKeyboard board, @NotNull Integer peer_id,
+				@NotNull String conversation_message_id) {
+			
+			val customMessageEdit = new CustomVkMessagesEditQuery(client, actor, peer_id, conversation_message_id);
+			
+			try {
+				customMessageEdit.message(text).keyboard(board).keepForwardMessages(true)
+				.keepSnippets(true).dontParseLinks(false).execute();
+			} catch (ApiException | ClientException e) {
+				
+				logger.info("(BotUtils) Message called exception from: " + e.toString());
+				
+				e.printStackTrace();
+			}	
+			
+			
+		}
+
+		@Override
+		public void editMessageAttachment(@NotNull String text, @NotNull String attachment, @NotNull Integer peer_id,
+				@NotNull String conversation_message_id) {
+			val customMessageEdit = new CustomVkMessagesEditQuery(client, actor, peer_id, conversation_message_id);
+			
+			try {
+				customMessageEdit.message(text).attachment(attachment).keepForwardMessages(true)
+				.keepSnippets(true).dontParseLinks(false).execute();
+			} catch (ApiException | ClientException e) {
+				
+				logger.info("(BotUtils) Message called exception from: " + e.toString());
+				
+				e.printStackTrace();
+			}
+			
 		}
 
 
@@ -3470,6 +3564,14 @@ public abstract class BotClient {
         			
         		}
         		
+        		default void installCallbackEventHandler(@NotNull VkCallbackListener handler) {
+        			
+        			VkCallbackAPI.getLists().add(handler);
+        			
+        			logger.info("(BotClient 2.0) Registered class of callbackhandler: " + handler.getClass().getName());
+        			
+        		}
+        		
         		void installHandler(@NotNull T handler);
         	}
          
@@ -3635,7 +3737,7 @@ public abstract class BotClient {
     	
     } 
 	
-    public class PollHandler extends CallbackApiLongPoll{
+    public class PollHandler extends VkCallbackPollHandler{
 
         private final Logger LOG = LoggerFactory.getLogger(PollHandler.class);
         
