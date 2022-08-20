@@ -44,7 +44,7 @@ import ru.Haber.VkAPI.bootstrap.BotClient.IBotUtils.VkMainConversationBotFunctio
 import ru.Haber.VkAPI.bootstrap.BotClient.IBotUtils.VkMainConversationBotFunctions.KeyBoardBuilder.CustomKeyboardButtonActionType;
 import ru.Haber.VkAPI.bootstrap.BotClient.IBotUtils.VkMainConversationBotFunctions.KeyBoardBuilder.VkCustomButton;
 
-@BotHandler(token = "43efe317478cf7eb17a71a352341a3a12fdc432584b807b23e761049c367089cd3a52daf080eeb8cbecc9", id=191873806)
+@BotHandler(token = "-", id=191873806)
 public class BotClientTest1 extends BotClient{
 
 	private static final BotClientTest1 bot = newLocalExec(BotClientTest1::new, true);
