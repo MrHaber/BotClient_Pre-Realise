@@ -1,9 +1,10 @@
 [![](https://jitpack.io/v/MrHaber/BotClient_Pre-Realise.svg)](https://jitpack.io/#MrHaber/BotClient_Pre-Realise)
-
 # BotClient Pre realise, custom build for Vk library
 ## VK-API Longpoll version <= 5.101
-## Example from BotClientTest2.java
-<img src="data/Screenrecorder-2022-08-20-08-01-19-789.mp4.gif" alt="Anime bot =)"  width="250" />
+
+### Example
+<img src="data/Screenrecorder-2022-08-20-08-01-19-789.mp4.gif" alt= ""  width="250"/>
+
 # Using:
 ### Startup
 ```java
